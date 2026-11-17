@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cake-rating-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cake-rating-service
+  template:
+    metadata:
+      labels:
+        app: cake-rating-service
+    spec:
+      containers:
+        - name: rating-service
+          image: cake-rating-service:2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+          env:
+            - name: ORDER_SERVICE_URL
+              value: "http://cake-order-service:8081"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/rating_db"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cake-rating-service
+spec:
+  selector:
+    app: cake-rating-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+  type: ClusterIP
